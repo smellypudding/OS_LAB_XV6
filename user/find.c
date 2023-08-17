@@ -3,6 +3,7 @@
 #include "user/user.h"
 #include "kernel/fs.h"
 
+// 定义递归函数，用于在给定目录下查找目标文件或目录
 void find(char const *path, char const *target)
 {
 	char buf[512], *p;
@@ -13,12 +14,13 @@ void find(char const *path, char const *target)
 		fprintf(2, "find: cannot open %s\n", path);
 		exit(1);
 	}
-
+	// 打开指定路径的文件
 	if(fstat(fd, &st) < 0){
 		fprintf(2, "find: cannot stat %s\n", path);
 		exit(1);
 	}
 
+	// 获取文件信息
 	switch(st.type){
 		case T_FILE:
 			fprintf(2, "Usage: find dir file\n");
@@ -41,11 +43,11 @@ void find(char const *path, char const *target)
         			continue;
       			}
       			if(st.type == T_DIR){
-      				find(buf, target);
+      				find(buf, target);// 递归进入子目录
       			}else if (st.type == T_FILE){
       				if (strcmp(de.name, target) == 0)
       				{
-      					printf("%s\n", buf);
+      					printf("%s\n", buf); // 输出匹配的文件路径
       				}
       			}
 			}
@@ -63,6 +65,6 @@ main(int argc, char *argv[]){
 	}
 	char const *path = argv[1];
 	char const *target = argv[2];
-	find(path, target);
+	find(path, target);// 调用递归查找函数
 	exit(0);
 }
