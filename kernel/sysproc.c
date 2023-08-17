@@ -109,24 +109,32 @@ sys_trace(void)
   return 0;
 }
 
+// 定义一个函数，用于向用户提供系统信息
 uint64
 sys_sysinfo(void)
 {
-  // user pointer to struct sysinfo
+  // 用户空间指向 sysinfo 结构体的指针
   uint64 si_addr;
 
+  // 获取系统调用参数，并将用户空间指针保存到 si_addr 变量中
   argaddr(0, &si_addr);
+
   int nproc;
   int freemem;
 
+  // 获取未使用进程数量和可用内存数量
   nproc = proc_not_unsed_num();
   freemem = free_mem_num();
 
+  // 创建一个 sysinfo 结构体对象并填充信息
   struct sysinfo sysinfo;
   sysinfo.freemem = freemem;
   sysinfo.nproc = nproc;
 
+  // 获取当前进程的指针
   struct proc *p = myproc();
+  
+  // 将 sysinfo 结构体拷贝到用户空间指定地址
   if (copyout(p->pagetable, si_addr, (char *)&sysinfo, sizeof(sysinfo)) < 0)
     return -1;
 
