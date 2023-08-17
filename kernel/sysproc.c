@@ -80,31 +80,42 @@ sys_sleep(void)
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
-  uint64 va;
-  int pagenum;
-  uint64 abitsaddr;
-  argaddr(0, &va);
-  argint(1, &pagenum);
-  argaddr(2, &abitsaddr);
 
-  uint64 maskbits = 0;
+  uint64 va;        // 要操作的虚拟地址
+  int pagenum;      // 要处理的页数
+  uint64 abitsaddr; // 存放访问位结果的用户空间地址
+
+  // 获取系统调用的参数
+  argaddr(0, &va);           // 获取虚拟地址
+  argint(1, &pagenum);       // 获取页数
+  argaddr(2, &abitsaddr);    // 获取存放结果的用户空间地址
+
+  uint64 maskbits = 0;       // 用于存放访问位结果的变量
+
   struct proc *proc = myproc();
+
+  // 遍历每一页并处理页面访问位
   for (int i = 0; i < pagenum; i++) {
-    pte_t *pte = walk(proc->pagetable, va+i*PGSIZE, 0);
+    pte_t *pte = walk(proc->pagetable, va + i * PGSIZE, 0);
     if (pte == 0)
       panic("page not exist.");
+    
+    // 检查页面是否被访问过，如果是则设置对应的位
     if (PTE_FLAGS(*pte) & PTE_A) {
       maskbits = maskbits | (1L << i);
     }
-    // clear PTE_A, set PTE_A bits zero
-    *pte = ((*pte&PTE_A) ^ *pte) ^ 0 ;
+
+    // 清除页面访问位
+    *pte = ((*pte & PTE_A) ^ *pte) ^ 0;
   }
+
+  // 将访问位结果拷贝到用户空间
   if (copyout(proc->pagetable, abitsaddr, (char *)&maskbits, sizeof(maskbits)) < 0)
     panic("sys_pgacess copyout error");
 
-  return 0;
+  return 0; // 返回操作成功
 }
+
 #endif
 
 uint64

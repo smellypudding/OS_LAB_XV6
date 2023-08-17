@@ -101,33 +101,37 @@ allocpid() {
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
 // If there are no free procs, or a memory allocation fails, return 0.
+// 分配一个进程结构体并进行初始化
 static struct proc*
 allocproc(void)
 {
   struct proc *p;
 
+  // 遍历进程表，查找一个未使用的进程结构体
   for(p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
     if(p->state == UNUSED) {
-      goto found;
+      goto found;  // 找到可用的进程结构体，跳转到 found 标签处
     } else {
       release(&p->lock);
     }
   }
-  return 0;
+  return 0;  // 没有可用的进程结构体，返回空指针
 
 found:
+  // 分配一个唯一的进程 ID 并将进程状态设置为已使用
   p->pid = allocpid();
   p->state = USED;
 
-  // Allocate a trapframe page.
+  // 分配一个陷阱帧页面用于保存进程上下文
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
     release(&p->lock);
     return 0;
   }
 
-   if ((p->usyscallpage = (struct usyscall *)kalloc()) == 0) {
+   // 分配一个用户系统调用页面
+  if ((p->usyscallpage = (struct usyscall *)kalloc()) == 0) {
     freeproc(p);
     release(&p->lock);
     return 0;
@@ -135,7 +139,7 @@ found:
 
   p->usyscallpage->pid = p->pid;
 
-  // An empty user page table.
+  // 创建一个空的用户页表
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
     freeproc(p);
@@ -143,13 +147,12 @@ found:
     return 0;
   }
 
-  // Set up new context to start executing at forkret,
-  // which returns to user space.
+  // 设置新的上下文以便在 forkret 处开始执行，forkret 返回到用户空间
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
-  return p;
+  return p;  // 返回初始化后的进程结构体指针
 }
 
 // free a proc structure and the data hanging from it,
@@ -192,7 +195,8 @@ proc_pagetable(struct proc *p)
   if(mappages(pagetable, USYSCALL, PGSIZE, (uint64)(p->usyscallpage), PTE_R | PTE_U | PTE_W) < 0) {
     uvmfree(pagetable, 0);
     return 0;
-  }
+  }//added
+  
   // map the trampoline code (for system call return)
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
