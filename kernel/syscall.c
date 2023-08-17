@@ -168,8 +168,9 @@ syscall(void)
   struct proc *p = myproc();
 
   num = p->trapframe->a7;
-  if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-   uint64 a0 = syscalls[num]();
+  if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {// 如果系统调用编号有效
+   uint64 a0 = syscalls[num]();// 通过系统调用编号，获取系统调用处理函数的指针，调用并将返回值存到用户进程的 a0 寄存器中
+    // 如果当前进程设置了对该编号系统调用的 trace，则打出 pid、系统调用名称和返回值。
     if ((p->mask >> num) & 0b1) {
       printf("%d: %s -> %d\n", p->pid, syscalls_name[num], a0);
     }
